@@ -12,8 +12,12 @@ import (
 // Tx is a transactional client that is created by calling Client.Tx().
 type Tx struct {
 	config
-	// User is the client for interacting with the User builders.
-	User *UserClient
+	// Member is the client for interacting with the Member builders.
+	Member *MemberClient
+	// OAuth is the client for interacting with the OAuth builders.
+	OAuth *OAuthClient
+	// OAuthUserinfo is the client for interacting with the OAuthUserinfo builders.
+	OAuthUserinfo *OAuthUserinfoClient
 
 	// lazily loaded.
 	client     *Client
@@ -44,7 +48,7 @@ type (
 	// and returns a Committer. For example:
 	//
 	//	hook := func(next ent.Committer) ent.Committer {
-	//		return ent.CommitFunc(func(ctx context.Context, tx *ent.Tx) error {
+	//		return ent.CommitFunc(func(context.Context, tx *ent.Tx) error {
 	//			// Do some stuff before.
 	//			if err := next.Commit(ctx, tx); err != nil {
 	//				return err
@@ -99,7 +103,7 @@ type (
 	// and returns a Rollbacker. For example:
 	//
 	//	hook := func(next ent.Rollbacker) ent.Rollbacker {
-	//		return ent.RollbackFunc(func(ctx context.Context, tx *ent.Tx) error {
+	//		return ent.RollbackFunc(func(context.Context, tx *ent.Tx) error {
 	//			// Do some stuff before.
 	//			if err := next.Rollback(ctx, tx); err != nil {
 	//				return err
@@ -149,7 +153,9 @@ func (tx *Tx) Client() *Client {
 }
 
 func (tx *Tx) init() {
-	tx.User = NewUserClient(tx.config)
+	tx.Member = NewMemberClient(tx.config)
+	tx.OAuth = NewOAuthClient(tx.config)
+	tx.OAuthUserinfo = NewOAuthUserinfoClient(tx.config)
 }
 
 // txDriver wraps the given dialect.Tx with a nop dialect.Driver implementation.
@@ -159,7 +165,7 @@ func (tx *Tx) init() {
 // of them in order to commit or rollback the transaction.
 //
 // If a closed transaction is embedded in one of the generated entities, and the entity
-// applies a query, for example: User.QueryXXX(), the query will be executed
+// applies a query, for example: Member.QueryXXX(), the query will be executed
 // through the driver which created this transaction.
 //
 // Note that txDriver is not goroutine safe.

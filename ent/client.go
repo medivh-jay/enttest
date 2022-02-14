@@ -7,9 +7,11 @@ import (
 	"fmt"
 	"log"
 
-	"entgo.io/bug/ent/migrate"
+	"enttest/ent/migrate"
 
-	"entgo.io/bug/ent/user"
+	"enttest/ent/member"
+	"enttest/ent/oauth"
+	"enttest/ent/oauthuserinfo"
 
 	"entgo.io/ent/dialect"
 	"entgo.io/ent/dialect/sql"
@@ -20,8 +22,12 @@ type Client struct {
 	config
 	// Schema is the client for creating, migrating and dropping schema.
 	Schema *migrate.Schema
-	// User is the client for interacting with the User builders.
-	User *UserClient
+	// Member is the client for interacting with the Member builders.
+	Member *MemberClient
+	// OAuth is the client for interacting with the OAuth builders.
+	OAuth *OAuthClient
+	// OAuthUserinfo is the client for interacting with the OAuthUserinfo builders.
+	OAuthUserinfo *OAuthUserinfoClient
 }
 
 // NewClient creates a new client configured with the given options.
@@ -35,7 +41,9 @@ func NewClient(opts ...Option) *Client {
 
 func (c *Client) init() {
 	c.Schema = migrate.NewSchema(c.driver)
-	c.User = NewUserClient(c.config)
+	c.Member = NewMemberClient(c.config)
+	c.OAuth = NewOAuthClient(c.config)
+	c.OAuthUserinfo = NewOAuthUserinfoClient(c.config)
 }
 
 // Open opens a database/sql.DB specified by the driver name and
@@ -67,9 +75,11 @@ func (c *Client) Tx(ctx context.Context) (*Tx, error) {
 	cfg := c.config
 	cfg.driver = tx
 	return &Tx{
-		ctx:    ctx,
-		config: cfg,
-		User:   NewUserClient(cfg),
+		ctx:           ctx,
+		config:        cfg,
+		Member:        NewMemberClient(cfg),
+		OAuth:         NewOAuthClient(cfg),
+		OAuthUserinfo: NewOAuthUserinfoClient(cfg),
 	}, nil
 }
 
@@ -87,15 +97,17 @@ func (c *Client) BeginTx(ctx context.Context, opts *sql.TxOptions) (*Tx, error) 
 	cfg := c.config
 	cfg.driver = &txDriver{tx: tx, drv: c.driver}
 	return &Tx{
-		config: cfg,
-		User:   NewUserClient(cfg),
+		config:        cfg,
+		Member:        NewMemberClient(cfg),
+		OAuth:         NewOAuthClient(cfg),
+		OAuthUserinfo: NewOAuthUserinfoClient(cfg),
 	}, nil
 }
 
 // Debug returns a new debug-client. It's used to get verbose logging on specific operations.
 //
 //	client.Debug().
-//		User.
+//		Member.
 //		Query().
 //		Count(ctx)
 //
@@ -118,87 +130,89 @@ func (c *Client) Close() error {
 // Use adds the mutation hooks to all the entity clients.
 // In order to add hooks to a specific client, call: `client.Node.Use(...)`.
 func (c *Client) Use(hooks ...Hook) {
-	c.User.Use(hooks...)
+	c.Member.Use(hooks...)
+	c.OAuth.Use(hooks...)
+	c.OAuthUserinfo.Use(hooks...)
 }
 
-// UserClient is a client for the User schema.
-type UserClient struct {
+// MemberClient is a client for the Member schema.
+type MemberClient struct {
 	config
 }
 
-// NewUserClient returns a client for the User from the given config.
-func NewUserClient(c config) *UserClient {
-	return &UserClient{config: c}
+// NewMemberClient returns a client for the Member from the given config.
+func NewMemberClient(c config) *MemberClient {
+	return &MemberClient{config: c}
 }
 
 // Use adds a list of mutation hooks to the hooks stack.
-// A call to `Use(f, g, h)` equals to `user.Hooks(f(g(h())))`.
-func (c *UserClient) Use(hooks ...Hook) {
-	c.hooks.User = append(c.hooks.User, hooks...)
+// A call to `Use(f, g, h)` equals to `member.Hooks(f(g(h())))`.
+func (c *MemberClient) Use(hooks ...Hook) {
+	c.hooks.Member = append(c.hooks.Member, hooks...)
 }
 
-// Create returns a create builder for User.
-func (c *UserClient) Create() *UserCreate {
-	mutation := newUserMutation(c.config, OpCreate)
-	return &UserCreate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+// Create returns a create builder for Member.
+func (c *MemberClient) Create() *MemberCreate {
+	mutation := newMemberMutation(c.config, OpCreate)
+	return &MemberCreate{config: c.config, hooks: c.Hooks(), mutation: mutation}
 }
 
-// CreateBulk returns a builder for creating a bulk of User entities.
-func (c *UserClient) CreateBulk(builders ...*UserCreate) *UserCreateBulk {
-	return &UserCreateBulk{config: c.config, builders: builders}
+// CreateBulk returns a builder for creating a bulk of Member entities.
+func (c *MemberClient) CreateBulk(builders ...*MemberCreate) *MemberCreateBulk {
+	return &MemberCreateBulk{config: c.config, builders: builders}
 }
 
-// Update returns an update builder for User.
-func (c *UserClient) Update() *UserUpdate {
-	mutation := newUserMutation(c.config, OpUpdate)
-	return &UserUpdate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+// Update returns an update builder for Member.
+func (c *MemberClient) Update() *MemberUpdate {
+	mutation := newMemberMutation(c.config, OpUpdate)
+	return &MemberUpdate{config: c.config, hooks: c.Hooks(), mutation: mutation}
 }
 
 // UpdateOne returns an update builder for the given entity.
-func (c *UserClient) UpdateOne(u *User) *UserUpdateOne {
-	mutation := newUserMutation(c.config, OpUpdateOne, withUser(u))
-	return &UserUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+func (c *MemberClient) UpdateOne(m *Member) *MemberUpdateOne {
+	mutation := newMemberMutation(c.config, OpUpdateOne, withMember(m))
+	return &MemberUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
 }
 
 // UpdateOneID returns an update builder for the given id.
-func (c *UserClient) UpdateOneID(id int) *UserUpdateOne {
-	mutation := newUserMutation(c.config, OpUpdateOne, withUserID(id))
-	return &UserUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+func (c *MemberClient) UpdateOneID(id uint64) *MemberUpdateOne {
+	mutation := newMemberMutation(c.config, OpUpdateOne, withMemberID(id))
+	return &MemberUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
 }
 
-// Delete returns a delete builder for User.
-func (c *UserClient) Delete() *UserDelete {
-	mutation := newUserMutation(c.config, OpDelete)
-	return &UserDelete{config: c.config, hooks: c.Hooks(), mutation: mutation}
+// Delete returns a delete builder for Member.
+func (c *MemberClient) Delete() *MemberDelete {
+	mutation := newMemberMutation(c.config, OpDelete)
+	return &MemberDelete{config: c.config, hooks: c.Hooks(), mutation: mutation}
 }
 
 // DeleteOne returns a delete builder for the given entity.
-func (c *UserClient) DeleteOne(u *User) *UserDeleteOne {
-	return c.DeleteOneID(u.ID)
+func (c *MemberClient) DeleteOne(m *Member) *MemberDeleteOne {
+	return c.DeleteOneID(m.ID)
 }
 
 // DeleteOneID returns a delete builder for the given id.
-func (c *UserClient) DeleteOneID(id int) *UserDeleteOne {
-	builder := c.Delete().Where(user.ID(id))
+func (c *MemberClient) DeleteOneID(id uint64) *MemberDeleteOne {
+	builder := c.Delete().Where(member.ID(id))
 	builder.mutation.id = &id
 	builder.mutation.op = OpDeleteOne
-	return &UserDeleteOne{builder}
+	return &MemberDeleteOne{builder}
 }
 
-// Query returns a query builder for User.
-func (c *UserClient) Query() *UserQuery {
-	return &UserQuery{
+// Query returns a query builder for Member.
+func (c *MemberClient) Query() *MemberQuery {
+	return &MemberQuery{
 		config: c.config,
 	}
 }
 
-// Get returns a User entity by its id.
-func (c *UserClient) Get(ctx context.Context, id int) (*User, error) {
-	return c.Query().Where(user.ID(id)).Only(ctx)
+// Get returns a Member entity by its id.
+func (c *MemberClient) Get(ctx context.Context, id uint64) (*Member, error) {
+	return c.Query().Where(member.ID(id)).Only(ctx)
 }
 
 // GetX is like Get, but panics if an error occurs.
-func (c *UserClient) GetX(ctx context.Context, id int) *User {
+func (c *MemberClient) GetX(ctx context.Context, id uint64) *Member {
 	obj, err := c.Get(ctx, id)
 	if err != nil {
 		panic(err)
@@ -207,6 +221,186 @@ func (c *UserClient) GetX(ctx context.Context, id int) *User {
 }
 
 // Hooks returns the client hooks.
-func (c *UserClient) Hooks() []Hook {
-	return c.hooks.User
+func (c *MemberClient) Hooks() []Hook {
+	return c.hooks.Member
+}
+
+// OAuthClient is a client for the OAuth schema.
+type OAuthClient struct {
+	config
+}
+
+// NewOAuthClient returns a client for the OAuth from the given config.
+func NewOAuthClient(c config) *OAuthClient {
+	return &OAuthClient{config: c}
+}
+
+// Use adds a list of mutation hooks to the hooks stack.
+// A call to `Use(f, g, h)` equals to `oauth.Hooks(f(g(h())))`.
+func (c *OAuthClient) Use(hooks ...Hook) {
+	c.hooks.OAuth = append(c.hooks.OAuth, hooks...)
+}
+
+// Create returns a create builder for OAuth.
+func (c *OAuthClient) Create() *OAuthCreate {
+	mutation := newOAuthMutation(c.config, OpCreate)
+	return &OAuthCreate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// CreateBulk returns a builder for creating a bulk of OAuth entities.
+func (c *OAuthClient) CreateBulk(builders ...*OAuthCreate) *OAuthCreateBulk {
+	return &OAuthCreateBulk{config: c.config, builders: builders}
+}
+
+// Update returns an update builder for OAuth.
+func (c *OAuthClient) Update() *OAuthUpdate {
+	mutation := newOAuthMutation(c.config, OpUpdate)
+	return &OAuthUpdate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOne returns an update builder for the given entity.
+func (c *OAuthClient) UpdateOne(o *OAuth) *OAuthUpdateOne {
+	mutation := newOAuthMutation(c.config, OpUpdateOne, withOAuth(o))
+	return &OAuthUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOneID returns an update builder for the given id.
+func (c *OAuthClient) UpdateOneID(id int) *OAuthUpdateOne {
+	mutation := newOAuthMutation(c.config, OpUpdateOne, withOAuthID(id))
+	return &OAuthUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// Delete returns a delete builder for OAuth.
+func (c *OAuthClient) Delete() *OAuthDelete {
+	mutation := newOAuthMutation(c.config, OpDelete)
+	return &OAuthDelete{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// DeleteOne returns a delete builder for the given entity.
+func (c *OAuthClient) DeleteOne(o *OAuth) *OAuthDeleteOne {
+	return c.DeleteOneID(o.ID)
+}
+
+// DeleteOneID returns a delete builder for the given id.
+func (c *OAuthClient) DeleteOneID(id int) *OAuthDeleteOne {
+	builder := c.Delete().Where(oauth.ID(id))
+	builder.mutation.id = &id
+	builder.mutation.op = OpDeleteOne
+	return &OAuthDeleteOne{builder}
+}
+
+// Query returns a query builder for OAuth.
+func (c *OAuthClient) Query() *OAuthQuery {
+	return &OAuthQuery{
+		config: c.config,
+	}
+}
+
+// Get returns a OAuth entity by its id.
+func (c *OAuthClient) Get(ctx context.Context, id int) (*OAuth, error) {
+	return c.Query().Where(oauth.ID(id)).Only(ctx)
+}
+
+// GetX is like Get, but panics if an error occurs.
+func (c *OAuthClient) GetX(ctx context.Context, id int) *OAuth {
+	obj, err := c.Get(ctx, id)
+	if err != nil {
+		panic(err)
+	}
+	return obj
+}
+
+// Hooks returns the client hooks.
+func (c *OAuthClient) Hooks() []Hook {
+	return c.hooks.OAuth
+}
+
+// OAuthUserinfoClient is a client for the OAuthUserinfo schema.
+type OAuthUserinfoClient struct {
+	config
+}
+
+// NewOAuthUserinfoClient returns a client for the OAuthUserinfo from the given config.
+func NewOAuthUserinfoClient(c config) *OAuthUserinfoClient {
+	return &OAuthUserinfoClient{config: c}
+}
+
+// Use adds a list of mutation hooks to the hooks stack.
+// A call to `Use(f, g, h)` equals to `oauthuserinfo.Hooks(f(g(h())))`.
+func (c *OAuthUserinfoClient) Use(hooks ...Hook) {
+	c.hooks.OAuthUserinfo = append(c.hooks.OAuthUserinfo, hooks...)
+}
+
+// Create returns a create builder for OAuthUserinfo.
+func (c *OAuthUserinfoClient) Create() *OAuthUserinfoCreate {
+	mutation := newOAuthUserinfoMutation(c.config, OpCreate)
+	return &OAuthUserinfoCreate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// CreateBulk returns a builder for creating a bulk of OAuthUserinfo entities.
+func (c *OAuthUserinfoClient) CreateBulk(builders ...*OAuthUserinfoCreate) *OAuthUserinfoCreateBulk {
+	return &OAuthUserinfoCreateBulk{config: c.config, builders: builders}
+}
+
+// Update returns an update builder for OAuthUserinfo.
+func (c *OAuthUserinfoClient) Update() *OAuthUserinfoUpdate {
+	mutation := newOAuthUserinfoMutation(c.config, OpUpdate)
+	return &OAuthUserinfoUpdate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOne returns an update builder for the given entity.
+func (c *OAuthUserinfoClient) UpdateOne(ou *OAuthUserinfo) *OAuthUserinfoUpdateOne {
+	mutation := newOAuthUserinfoMutation(c.config, OpUpdateOne, withOAuthUserinfo(ou))
+	return &OAuthUserinfoUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOneID returns an update builder for the given id.
+func (c *OAuthUserinfoClient) UpdateOneID(id int) *OAuthUserinfoUpdateOne {
+	mutation := newOAuthUserinfoMutation(c.config, OpUpdateOne, withOAuthUserinfoID(id))
+	return &OAuthUserinfoUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// Delete returns a delete builder for OAuthUserinfo.
+func (c *OAuthUserinfoClient) Delete() *OAuthUserinfoDelete {
+	mutation := newOAuthUserinfoMutation(c.config, OpDelete)
+	return &OAuthUserinfoDelete{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// DeleteOne returns a delete builder for the given entity.
+func (c *OAuthUserinfoClient) DeleteOne(ou *OAuthUserinfo) *OAuthUserinfoDeleteOne {
+	return c.DeleteOneID(ou.ID)
+}
+
+// DeleteOneID returns a delete builder for the given id.
+func (c *OAuthUserinfoClient) DeleteOneID(id int) *OAuthUserinfoDeleteOne {
+	builder := c.Delete().Where(oauthuserinfo.ID(id))
+	builder.mutation.id = &id
+	builder.mutation.op = OpDeleteOne
+	return &OAuthUserinfoDeleteOne{builder}
+}
+
+// Query returns a query builder for OAuthUserinfo.
+func (c *OAuthUserinfoClient) Query() *OAuthUserinfoQuery {
+	return &OAuthUserinfoQuery{
+		config: c.config,
+	}
+}
+
+// Get returns a OAuthUserinfo entity by its id.
+func (c *OAuthUserinfoClient) Get(ctx context.Context, id int) (*OAuthUserinfo, error) {
+	return c.Query().Where(oauthuserinfo.ID(id)).Only(ctx)
+}
+
+// GetX is like Get, but panics if an error occurs.
+func (c *OAuthUserinfoClient) GetX(ctx context.Context, id int) *OAuthUserinfo {
+	obj, err := c.Get(ctx, id)
+	if err != nil {
+		panic(err)
+	}
+	return obj
+}
+
+// Hooks returns the client hooks.
+func (c *OAuthUserinfoClient) Hooks() []Hook {
+	return c.hooks.OAuthUserinfo
 }

@@ -8,21 +8,64 @@ import (
 )
 
 var (
-	// UsersColumns holds the columns for the "users" table.
-	UsersColumns = []*schema.Column{
-		{Name: "id", Type: field.TypeInt, Increment: true},
-		{Name: "age", Type: field.TypeInt},
-		{Name: "name", Type: field.TypeString},
+	// MembersColumns holds the columns for the "members" table.
+	MembersColumns = []*schema.Column{
+		{Name: "id", Type: field.TypeUint64},
+		{Name: "created_at", Type: field.TypeInt64},
+		{Name: "updated_at", Type: field.TypeInt64},
+		{Name: "uid", Type: field.TypeUint, Unique: true},
+		{Name: "register_at", Type: field.TypeUint},
+		{Name: "register_ip", Type: field.TypeString, Size: 64},
+		{Name: "avatar", Type: field.TypeString, Nullable: true, Size: 1024},
+		{Name: "gender", Type: field.TypeEnum, Enums: []string{"0", "1", "2"}},
+		{Name: "description", Type: field.TypeString, Size: 1024},
+		{Name: "nickname", Type: field.TypeString, Size: 20},
+		{Name: "area_code", Type: field.TypeUint8, Nullable: true},
+		{Name: "mobile", Type: field.TypeUint64, Nullable: true},
+		{Name: "email", Type: field.TypeString, Nullable: true},
 	}
-	// UsersTable holds the schema information for the "users" table.
-	UsersTable = &schema.Table{
-		Name:       "users",
-		Columns:    UsersColumns,
-		PrimaryKey: []*schema.Column{UsersColumns[0]},
+	// MembersTable holds the schema information for the "members" table.
+	MembersTable = &schema.Table{
+		Name:       "members",
+		Columns:    MembersColumns,
+		PrimaryKey: []*schema.Column{MembersColumns[0]},
+	}
+	// OauthsColumns holds the columns for the "oauths" table.
+	OauthsColumns = []*schema.Column{
+		{Name: "id", Type: field.TypeInt, Increment: true},
+		{Name: "name", Type: field.TypeString},
+		{Name: "method", Type: field.TypeString},
+		{Name: "icon", Type: field.TypeString},
+		{Name: "appid", Type: field.TypeString},
+		{Name: "secret", Type: field.TypeString},
+		{Name: "resource_uri", Type: field.TypeJSON},
+		{Name: "scope", Type: field.TypeJSON},
+	}
+	// OauthsTable holds the schema information for the "oauths" table.
+	OauthsTable = &schema.Table{
+		Name:       "oauths",
+		Columns:    OauthsColumns,
+		PrimaryKey: []*schema.Column{OauthsColumns[0]},
+	}
+	// OauthUserinfosColumns holds the columns for the "oauth_userinfos" table.
+	OauthUserinfosColumns = []*schema.Column{
+		{Name: "id", Type: field.TypeInt, Increment: true},
+		{Name: "account", Type: field.TypeString},
+		{Name: "nickname", Type: field.TypeString},
+		{Name: "avatar", Type: field.TypeString},
+		{Name: "gender", Type: field.TypeString},
+	}
+	// OauthUserinfosTable holds the schema information for the "oauth_userinfos" table.
+	OauthUserinfosTable = &schema.Table{
+		Name:       "oauth_userinfos",
+		Columns:    OauthUserinfosColumns,
+		PrimaryKey: []*schema.Column{OauthUserinfosColumns[0]},
 	}
 	// Tables holds all the tables in the schema.
 	Tables = []*schema.Table{
-		UsersTable,
+		MembersTable,
+		OauthsTable,
+		OauthUserinfosTable,
 	}
 )
 

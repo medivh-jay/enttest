@@ -2,8 +2,56 @@
 
 package ent
 
+import (
+	"enttest/ent/member"
+	"enttest/ent/schema"
+)
+
 // The init function reads all schema descriptors with runtime code
 // (default values, validators, hooks and policies) and stitches it
 // to their package variables.
 func init() {
+	memberMixin := schema.Member{}.Mixin()
+	memberMixinFields0 := memberMixin[0].Fields()
+	_ = memberMixinFields0
+	memberFields := schema.Member{}.Fields()
+	_ = memberFields
+	// memberDescCreatedAt is the schema descriptor for created_at field.
+	memberDescCreatedAt := memberMixinFields0[1].Descriptor()
+	// member.DefaultCreatedAt holds the default value on creation for the created_at field.
+	member.DefaultCreatedAt = memberDescCreatedAt.Default.(func() int64)
+	// memberDescUpdatedAt is the schema descriptor for updated_at field.
+	memberDescUpdatedAt := memberMixinFields0[2].Descriptor()
+	// member.DefaultUpdatedAt holds the default value on creation for the updated_at field.
+	member.DefaultUpdatedAt = memberDescUpdatedAt.Default.(func() int64)
+	// member.UpdateDefaultUpdatedAt holds the default value on update for the updated_at field.
+	member.UpdateDefaultUpdatedAt = memberDescUpdatedAt.UpdateDefault.(func() int64)
+	// memberDescRegisterAt is the schema descriptor for register_at field.
+	memberDescRegisterAt := memberFields[1].Descriptor()
+	// member.DefaultRegisterAt holds the default value on creation for the register_at field.
+	member.DefaultRegisterAt = memberDescRegisterAt.Default.(func() uint)
+	// memberDescRegisterIP is the schema descriptor for register_ip field.
+	memberDescRegisterIP := memberFields[2].Descriptor()
+	// member.RegisterIPValidator is a validator for the "register_ip" field. It is called by the builders before save.
+	member.RegisterIPValidator = memberDescRegisterIP.Validators[0].(func(string) error)
+	// memberDescAvatar is the schema descriptor for avatar field.
+	memberDescAvatar := memberFields[3].Descriptor()
+	// member.AvatarValidator is a validator for the "avatar" field. It is called by the builders before save.
+	member.AvatarValidator = memberDescAvatar.Validators[0].(func(string) error)
+	// memberDescDescription is the schema descriptor for description field.
+	memberDescDescription := memberFields[5].Descriptor()
+	// member.DescriptionValidator is a validator for the "description" field. It is called by the builders before save.
+	member.DescriptionValidator = memberDescDescription.Validators[0].(func(string) error)
+	// memberDescNickname is the schema descriptor for nickname field.
+	memberDescNickname := memberFields[6].Descriptor()
+	// member.NicknameValidator is a validator for the "nickname" field. It is called by the builders before save.
+	member.NicknameValidator = memberDescNickname.Validators[0].(func(string) error)
+	// memberDescEmail is the schema descriptor for email field.
+	memberDescEmail := memberFields[9].Descriptor()
+	// member.EmailValidator is a validator for the "email" field. It is called by the builders before save.
+	member.EmailValidator = memberDescEmail.Validators[0].(func(string) error)
+	// memberDescID is the schema descriptor for id field.
+	memberDescID := memberMixinFields0[0].Descriptor()
+	// member.DefaultID holds the default value on creation for the id field.
+	member.DefaultID = memberDescID.Default.(func() uint64)
 }

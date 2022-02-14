@@ -6,5 +6,11 @@ import (
 	"entgo.io/ent/dialect/sql"
 )
 
-// User is the predicate function for user builders.
-type User func(*sql.Selector)
+// Member is the predicate function for member builders.
+type Member func(*sql.Selector)
+
+// OAuth is the predicate function for oauth builders.
+type OAuth func(*sql.Selector)
+
+// OAuthUserinfo is the predicate function for oauthuserinfo builders.
+type OAuthUserinfo func(*sql.Selector)

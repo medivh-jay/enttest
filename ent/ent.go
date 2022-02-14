@@ -3,10 +3,12 @@
 package ent
 
 import (
+	"enttest/ent/member"
+	"enttest/ent/oauth"
+	"enttest/ent/oauthuserinfo"
 	"errors"
 	"fmt"
 
-	"entgo.io/bug/ent/user"
 	"entgo.io/ent"
 	"entgo.io/ent/dialect/sql"
 )
@@ -29,7 +31,9 @@ type OrderFunc func(*sql.Selector)
 // columnChecker returns a function indicates if the column exists in the given column.
 func columnChecker(table string) func(string) error {
 	checks := map[string]func(string) bool{
-		user.Table: user.ValidColumn,
+		member.Table:        member.ValidColumn,
+		oauth.Table:         oauth.ValidColumn,
+		oauthuserinfo.Table: oauthuserinfo.ValidColumn,
 	}
 	check, ok := checks[table]
 	if !ok {
@@ -141,7 +145,7 @@ func Sum(field string) AggregateFunc {
 	}
 }
 
-// ValidationError returns when validating a field or edge fails.
+// ValidationError returns when validating a field fails.
 type ValidationError struct {
 	Name string // Field or edge name.
 	err  error
